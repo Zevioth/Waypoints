@@ -32,6 +32,18 @@ jobs:
         shell: pwsh
         run: ./scripts/package.ps1 -Abi all
 
+      - name: Dump ModMenu header (debug)
+        if: always()
+        run: |
+          H=$(find build-config -path "*/pl/ModMenu.hpp" 2>/dev/null | head -n1)
+          if [ -z "$H" ]; then
+            echo "ModMenu.hpp not found under build-config"
+            find / -iname "ModMenu.hpp" 2>/dev/null
+          else
+            echo "=== $H ==="
+            cat "$H"
+          fi
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
