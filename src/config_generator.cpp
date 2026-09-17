@@ -27,7 +27,8 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  pl::config::ConfigFile<waypointmanager::ModConfig> config(outDir / "config.json",
+  pl::config::ConfigFile<waypointmanager::ModConfig> config(waypointmanager::ModConfig{}, outDir / "config.json",
+                                                            outDir / "config.schema.json");
                                                               outDir / "config.schema.json");
   if (!config.load()) {
     std::fprintf(stderr, "failed to generate default config\n");
