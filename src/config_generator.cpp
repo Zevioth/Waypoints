@@ -1,42 +1,38 @@
 #include "mod/Config.h"
 
+#include <pl/Config.hpp>
+
+#include <cstdio>
 #include <filesystem>
-#include <fstream>
-#include <iostream>
 
-namespace {
-
-bool writeJson(const std::filesystem::path &path, const nlohmann::json &value) {
-    std::error_code ec;
-    std::filesystem::create_directories(path.parent_path(), ec);
-    if (ec) {
-        std::cerr << "Failed to create " << path.parent_path() << ": " << ec.message() << '\n';
-        return false;
-    }
-
-    std::ofstream stream(path, std::ios::binary | std::ios::trunc);
-    if (!stream) {
-        std::cerr << "Failed to open " << path << '\n';
-        return false;
-    }
-
-    stream << value.dump(2) << '\n';
-    return stream.good();
-}
-
-} // namespace
-
+// One honest flag: I could not fetch this exact file from your repository
+// during research, so the ConfigFile constructor call below is my best
+// grounded reconstruction from the confirmed docs ("you may pass explicit
+// paths when you need a non-default location") plus the CMake target that
+// calls this program with an output directory. If this specific line fails
+// to compile in GitHub Actions, paste me the compiler error - it's almost
+// certainly a one-line fix to match the real overload in pl/Config.hpp
+// (fetched by CMake into build-*/​_deps/preloader_android-src/include/pl/Config.hpp).
 int main(int argc, char **argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: levi_config_generator <output-config-dir>\n";
-        return 2;
-    }
+  if (argc < 2) {
+    std::fprintf(stderr, "usage: %s <output-directory>\n", argv[0]);
+    return 1;
+  }
 
-    const std::filesystem::path outputDir = argv[1];
-    if (!writeJson(outputDir / "config.json", clange_me::makeDefaultConfigJson()))
-        return 1;
-    if (!writeJson(outputDir / "config.schema.json", clange_me::makeConfigSchemaJson()))
-        return 1;
+  std::filesystem::path outDir(argv[1]);
+  std::error_code ec;
+  std::filesystem::create_directories(outDir, ec);
+  if (ec) {
+    std::fprintf(stderr, "failed to create %s: %s\n", outDir.string().c_str(), ec.message().c_str());
+    return 1;
+  }
 
-    return 0;
+  pl::config::ConfigFile<waypointmanager::ModConfig> config(outDir / "config.json",
+                                                              outDir / "config.schema.json");
+  if (!config.load()) {
+    std::fprintf(stderr, "failed to generate default config\n");
+    return 1;
+  }
+  config.save();
+  return 0;
 }
