@@ -1,30 +1,57 @@
 #pragma once
 
-#include <optional>
-
 #include "mod/Config.h"
 
+#include <pl/Config.hpp>
 #include <pl/Mod.hpp>
+#include <pl/ModMenu.hpp>
 
-namespace clange_me {
+#include <optional>
+#include <string>
+#include <string_view>
 
-class ClangeMeMod {
-  public:
-    static ClangeMeMod &instance();
+namespace waypointmanager {
 
-    ClangeMeMod();
+class WaypointManagerMod {
+public:
+  static WaypointManagerMod &instance();
 
-    [[nodiscard]] ll::mod::NativeMod &getSelf() const { return mSelf; }
+  WaypointManagerMod(const WaypointManagerMod &) = delete;
+  WaypointManagerMod &operator=(const WaypointManagerMod &) = delete;
 
-    bool load();
-    bool enable();
-    bool disable();
-    bool unload();
+  bool load();
+  bool enable();
+  bool disable();
+  bool unload();
 
-  private:
-    ll::mod::NativeMod &mSelf;
-    ModConfig mConfig;
-    std::optional<pl::config::ConfigFile<ModConfig>> mConfigFile;
+  [[nodiscard]] ll::mod::NativeMod &getSelf() const { return mSelf; }
+
+private:
+  WaypointManagerMod();
+
+  bool registerWaypointButton();
+  bool registerMainModule();
+  bool registerStageModule();
+  bool registerApplyModule();
+
+  void onWaypointButtonEvent(std::string_view buttonId, pl::modmenu::ButtonEvent event, float value);
+  void onMainModuleToggle(std::string_view moduleId, bool enabled);
+  void onApplyModuleToggle(std::string_view moduleId, bool enabled);
+
+  void rebuildMainModule();
+  void cycleActiveWaypoint();
+  void applyStagedAction();
+  Waypoint *findWaypointById(int id);
+  [[nodiscard]] std::string buildWaypointListDescription() const;
+
+  ll::mod::NativeMod &mSelf;
+  std::optional<pl::config::ConfigFile<ModConfig>> mConfigFile;
+  ModConfig mConfig;
+
+  bool mButtonRegistered = false;
+  bool mMainModuleRegistered = false;
+  bool mStageModuleRegistered = false;
+  bool mApplyModuleRegistered = false;
 };
 
-} // namespace clange_me
+} // namespace waypointmanager
